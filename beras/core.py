@@ -20,7 +20,7 @@ class Tensor(np.ndarray):
             return input_array
         
         # Task 1: input the data to construct the object. 
-        obj = np.asarray(a=???).view(type=cls)
+        obj = np.asarray(input_array).view(type=cls)
         obj.backward = lambda x: None   ## Backward starts as None, gets assigned later
         obj.grad = None                 ## Gradient starts as None, gets computed later
         obj.requires_grad = True        ## By default, we'll want to compute gradient for new tensors
@@ -115,22 +115,23 @@ class Weighted(ABC):
     @property
     def trainable_variables(self) -> list[Tensor]:
         """Collects all trainable variables in the module"""
-        return NotImplementedError
+        return [p for p in self.parameters if p.requires_grad]
 
     @property
     def non_trainable_variables(self) -> list[Tensor]:
         """Collects all non-trainable variables in the module"""
-        return NotImplementedError
+        return [p for p in self.parameters if not p.requires_grad]
 
     @property
     def trainable(self) -> bool:
         """Returns true if any of the weights are trainable"""
-        return NotImplementedError
+        return any(p.requires_grad for p in self.parameters)
 
     @trainable.setter
     def trainable(self, trainable: bool):
         """Sets the trainable status of all weights to trainable"""
-        pass 
+        for p in self.parameters:
+            p.requires_grad = trainable
 
 
 class Diffable(Callable, Weighted, ABC):

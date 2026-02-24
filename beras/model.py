@@ -144,6 +144,6 @@ class Sequential(Model):
         ## If training, then also update the gradients according to the optimizer
     
         if training:
-            return {"loss": ???, "acc": ???}
+            return {"loss": 0.0, "acc": 0.0}
         else:
-            return {"loss": ???, "acc": ???}, predictions
+            return {"loss": 0.0, "acc": 0.0}, predictions

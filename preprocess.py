@@ -1,5 +1,5 @@
 import numpy as np
-from beras import Tensor
+from beras.core import Tensor
 from tensorflow.keras import datasets
 
 def load_and_preprocess_data() -> tuple[Tensor, Tensor, Tensor, Tensor]:
@@ -13,7 +13,19 @@ def load_and_preprocess_data() -> tuple[Tensor, Tensor, Tensor, Tensor]:
 
     ## TODO: Flatten (reshape) and normalize the inputs to have values between 0.0 and 1.0
     ## Hint: train and test inputs are numpy arrays so you can use np methods on them!
-
+    # Flatten images: (N, 28, 28) → (N, 784)
+    train_inputs = train_inputs.reshape(train_inputs.shape[0], -1)
+    test_inputs  = test_inputs.reshape(test_inputs.shape[0], -1)
+    # Normalize pixel values to [0,1]
+    train_inputs = train_inputs.astype(np.float32) / 255.0
+    test_inputs  = test_inputs.astype(np.float32) / 255.0
 
     ## TODO: Convert all of the data into Tensors (constructor in core.py)
+    train_inputs = Tensor(train_inputs)
+    test_inputs  = Tensor(test_inputs)
+
+    train_labels = Tensor(train_labels)
+    test_labels  = Tensor(test_labels)
+
+    return train_inputs, train_labels, test_inputs, test_labels
 
