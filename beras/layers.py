@@ -23,28 +23,33 @@ class Linear(Diffable):
         return Tensor(x @ self.w + self.b)
 
     def get_input_gradients(self) -> list[Tensor]:
-        x = self.inputs[0]
-        batch_size = x.shape[0]
-        # W^T shape: (output_size, input_size)
-        w_T = self.w.T
-        # Broadcast across batch
-        grad = np.array([w_T for _ in range(batch_size)])
-
-        return [grad]
+        #batch_size = self.inputs[0].shape[0]
+        #input_size, output_size = self.w.shape
+        #grad = np.zeros((batch_size, input_size, output_size))
+        #for i in range(batch_size):
+        #    grad[i] = self.w
+        #return [grad]
+        
+        #x = self.inputs[0]
+        #batch_size = x.shape[0]
+        #input_size, output_size = self.w.shape
+        #grad = np.zeros((batch_size, input_size, output_size))
+        #for i in range(batch_size):
+        #    grad[i] = self.w
+        #return [grad]
+    
+        return [self.w]
 
     def get_weight_gradients(self) -> list[Tensor]:
         x = self.inputs[0]
         batch_size = x.shape[0]
-        input_size = self.w.shape[0]
-        output_size = self.w.shape[1]
+        input_size, output_size = self.w.shape
 
-        # dW per sample = outer product of x_i and identity
         dW = np.zeros((batch_size, input_size, output_size))
         for i in range(batch_size):
             dW[i] = np.outer(x[i], np.ones(output_size))
 
-        # db per sample = identity wrt each output
-        db = np.ones((batch_size, output_size))
+        db = np.ones(output_size)
 
         return [dW, db]
 

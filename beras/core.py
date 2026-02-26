@@ -309,5 +309,27 @@ class Diffable(Callable, Weighted, ABC):
         if Tensor.debug_print: print(f"Backwards on {self}")
 
         # TODO: Implement backward pass
-        
-        raise NotImplementedError
+        # Starting layer (loss)
+        if Tensor.debug_print:
+            print(f"Backwards on {self}")
+
+        # If no upstream gradient (starting from loss)
+        if grad is None:
+            grad = [None]
+
+        # Compute weight gradients
+        weight_grads = self.compose_weight_gradients(grad)
+
+        for param, g in zip(self.parameters, weight_grads):
+            if param.requires_grad:
+                param.grad = g
+
+        # Compute input gradients
+        input_grads = self.compose_input_gradients(grad)
+
+        # Recursively propagate
+        for inp, g in zip(self.inputs, input_grads):
+            if hasattr(inp, "backward"):
+                inp.backward([g])
+            
+            

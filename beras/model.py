@@ -69,7 +69,10 @@ class Model(Diffable):
         """
         Return the weights of the model by iterating through the layers
         """
-        return NotImplementedError
+        params = []
+        for layer in self.layers:
+            params.extend(layer.parameters)
+        return params
 
     def compile(self, optimizer: Diffable, loss_fn: Diffable, acc_fn: Callable):
         """
@@ -88,7 +91,33 @@ class Model(Diffable):
         Trains the model by iterating over the input dataset in batches and feeding input batches
         into the batch_step method with training. At the end, the metrics are returned.
         """
-        return NotImplementedError
+        history = defaultdict(list)
+        num_samples = x.shape[0]
+        num_batches = int(np.ceil(num_samples / batch_size))
+
+        for epoch in range(epochs):
+
+            batch_metrics = defaultdict(list)
+
+            for batch in range(num_batches):
+
+                start = batch * batch_size
+                end = min(start + batch_size, num_samples)
+
+                x_batch = x[start:end]
+                y_batch = y[start:end]
+
+                metrics = self.batch_step(x_batch, y_batch, training=True)
+
+                for k, v in metrics.items():
+                    batch_metrics[k].append(v)
+
+                # print_stats(batch_metrics, batch, num_batches, epoch)
+
+            update_metric_dict(history, batch_metrics)
+            print_stats(history, epoch=epoch, avg=True)
+
+        return history
 
     def evaluate(self, 
                  x: Tensor, y: Union[Tensor, np.ndarray], 
@@ -102,7 +131,32 @@ class Model(Diffable):
         NOTE: This method is almost identical to fit (think about how training and testing differ --
         the core logic should be the same)
         """
-        return NotImplementedError
+        metrics = defaultdict(list)
+        predictions_list = []
+
+        num_samples = x.shape[0]
+        num_batches = int(np.ceil(num_samples / batch_size))
+
+        for batch in range(num_batches):
+
+            start = batch * batch_size
+            end = min(start + batch_size, num_samples)
+
+            x_batch = x[start:end]
+            y_batch = y[start:end]
+
+            batch_metrics = self.batch_step(x_batch, y_batch, training=False)
+
+            preds = self.forward(x_batch)
+            predictions_list.append(np.array(preds))
+
+            for k, v in batch_metrics.items():
+                metrics[k].append(v)
+
+        avg_metrics = {k: float(np.mean(v)) for k, v in metrics.items()}
+        predictions = np.concatenate(predictions_list, axis=0)
+
+        return avg_metrics, predictions
 
     def get_input_gradients(self) -> list[Tensor]:
         return super().get_input_gradients()
@@ -133,7 +187,14 @@ class Sequential(Model):
         It's helpful to note that layers are initialized in beras.Model, and
         you can refer to them with self.layers. You can call a layer by doing var = layer(input).
         """
-        return NotImplementedError
+        if not isinstance(inputs, Tensor):
+            inputs = Tensor(inputs)
+
+        out = inputs
+
+        for layer in self.layers:
+            out = layer(out)
+        return out
 
     def batch_step(self, x: Tensor, y: Tensor, training: bool = True) -> dict[str, float]:
         """
@@ -143,7 +204,24 @@ class Sequential(Model):
         ## TODO: Compute loss and accuracy for a batch. Return as a dictionary
         ## If training, then also update the gradients according to the optimizer
     
+        #if training:
+        #    return {"loss": 0.0, "acc": 0.0}
+        #else:
+        #    return {"loss": 0.0, "acc": 0.0}, predictions
         if training:
-            return {"loss": 0.0, "acc": 0.0}
-        else:
-            return {"loss": 0.0, "acc": 0.0}, predictions
+            self.optimizer.zero_grad()
+            
+        predictions = self.forward(x)
+
+        loss = self.compiled_loss(predictions, y)
+        acc  = self.compiled_acc(predictions, y)
+
+        if training:
+            loss.backward()
+            # self.optimizer.step(self.parameters)
+            self.optimizer.step()
+
+        return {"loss": float(loss), "acc": float(acc)}
+
+
+
