@@ -24,7 +24,9 @@ class BasicOptimizer(Optimizer):
         super().__init__(parameters, learning_rate)
 
     def step(self):
-        return NotImplementedError
+        for param in self.parameters:
+            if param.requires_grad and param.grad is not None:
+                param -= self.learning_rate * param.grad
 
 
 class RMSProp(Optimizer):
@@ -36,7 +38,12 @@ class RMSProp(Optimizer):
         self.v = [0 for _ in range(len(parameters))]
 
     def step(self):
-        return NotImplementedError
+        for i, param in enumerate(self.parameters):
+            if param.requires_grad and param.grad is not None:
+                # Update moving average of squared gradients
+                self.v[i] = self.beta * self.v[i] + (1 - self.beta) * (param.grad ** 2)
+                # Update parameter
+                param -= self.learning_rate * param.grad / (np.sqrt(self.v[i]) + self.epsilon)
 
 
 class Adam(Optimizer):
@@ -59,4 +66,23 @@ class Adam(Optimizer):
         self.t = 0                                   # Time counter
 
     def step(self):
-        return NotImplementedError
+        # increment time step
+        self.t += 1
+
+        for i, param in enumerate(self.parameters):
+            if param.requires_grad and param.grad is not None:
+
+                g = param.grad
+
+                # Update first moment
+                self.m[i] = self.beta_1 * self.m[i] + (1 - self.beta_1) * g
+
+                # Update second moment
+                self.v[i] = self.beta_2 * self.v[i] + (1 - self.beta_2) * (g ** 2)
+
+                # Bias correction
+                m_hat = self.m[i] / (1 - self.beta_1 ** self.t)
+                v_hat = self.v[i] / (1 - self.beta_2 ** self.t)
+
+                # Update parameter
+                param -= self.learning_rate * m_hat / (np.sqrt(v_hat) + self.epsilon)
