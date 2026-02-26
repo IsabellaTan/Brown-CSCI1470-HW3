@@ -142,7 +142,39 @@ def test_categorical_accuracy():
 # # ============================================================================
 # # TODO: Add more tests to ensure your code is correct!
 # # ============================================================================
+def test_softmax_row_sums():
+    student_softmax = beras.activations.Softmax()
 
+    test_arr = np.random.randn(5, 10)
+    out = student_softmax(test_arr)
+
+    row_sums = np.sum(out, axis=1)
+
+    np.testing.assert_allclose(row_sums, np.ones(5), atol=1e-6)
+
+    print("Softmax row sum test passed!")
+
+def test_dense_output_shape():
+    layer = Linear(7, 3)
+
+    x = np.random.randn(11, 7)
+    out = layer(x)
+
+    assert out.shape == (11, 3)
+
+    print("Dense output shape test passed!")
+
+def test_sigmoid_extreme_values():
+    student_sigmoid = beras.activations.Sigmoid()
+
+    test_arr = np.array([-1000, -100, 0, 100, 1000], dtype=np.float32)
+
+    out = student_sigmoid(test_arr)
+
+    assert np.all(out >= 0)
+    assert np.all(out <= 1)
+
+    print("Sigmoid extreme value test passed!")
 
 # ============================================================================
 # TEST RUNNERS! DO NOT EDIT THIS SECTION!

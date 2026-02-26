@@ -63,7 +63,58 @@ def test_model_return():
 # ============================================================================
 # TODO: Add more tests to ensure your code is correct!
 # ============================================================================
+def test_model_deterministic():
+    model = assignment.get_model()
 
+    x = np.random.randn(8, 784)
+
+    out1 = model(x)
+    out2 = model(x)
+
+    np.testing.assert_allclose(out1, out2, atol=1e-6)
+
+    print("Model deterministic test passed!")
+
+def test_batch_consistency():
+    model = assignment.get_model()
+
+    x1 = np.random.randn(1, 784)
+    x2 = np.random.randn(16, 784)
+
+    out1 = model(x1)
+    out2 = model(x2)
+
+    assert out1.shape == (1, 10)
+    assert out2.shape == (16, 10)
+
+    print("Batch consistency test passed!")
+
+def test_training_step_runs():
+    model = assignment.get_model()
+
+    x = np.random.randn(4, 784)
+    y = np.eye(10)[np.random.randint(0, 10, 4)]
+
+    loss_fn = beras.CategoricalCrossEntropy()
+
+    out = model(x)
+    loss = loss_fn(out, y)
+
+    loss.backward()
+
+    print("Training step backward pass test passed!")
+
+def test_model_has_parameters():
+    model = assignment.get_model()
+
+    params = []
+    for layer in model.layers:
+        if hasattr(layer, "parameters"):
+            params.extend(layer.parameters)
+
+    assert len(params) > 0, "Model has no trainable parameters"
+
+    print("Model parameters test passed!")
 
 # ============================================================================
 # TEST RUNNERS! DO NOT EDIT THIS SECTION!

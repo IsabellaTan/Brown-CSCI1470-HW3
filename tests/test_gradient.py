@@ -113,13 +113,33 @@ def test_deterministic_gradients():
     print("Deterministic gradient computation test passed!")
 
 
-
 # TODO: Add more tests for gradient computation as you see fit!
-
 # ============================================================================
 # TODO: Add more tests to ensure your code is correct!
 # ============================================================================
+def test_zero_input_gradient():
+    """
+    If input is zero, weight gradient should be zero.
+    """
+    layer = layers.Linear(2, 1, initializer="normal")
 
+    # deterministic weights
+    layer.w.assign([[1.0], [2.0]])
+    layer.b.assign([0.0])
+
+    x = core.Tensor([[0.0, 0.0]])  # zero input
+    y_true = core.Tensor([[1.0]])
+
+    loss_fn = losses.MeanSquaredError()
+
+    y_pred = layer(x)
+    loss = loss_fn(y_pred, y_true)
+    loss.backward()
+
+    # weight gradient should be zero
+    assert np.allclose(layer.w.grad, 0.0), "Weight gradient should be zero when input is zero"
+
+    print("Zero input gradient test passed!")
 
 # ============================================================================
 # TEST RUNNERS! DO NOT EDIT THIS SECTION!
